@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+
+{% block title %}Kelola Data Siswa{% endblock %}
+{% block header_title %}Manajemen Data Siswa{% endblock %}
+{% block header_subtitle %}Kelola informasi profil siswa dan status registrasi wajah AI{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Top Action & Search Bar -->
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        
+        <!-- Search and Filter -->
+        <div class="flex items-center space-x-3 flex-1 max-w-md">
+            <div class="relative w-full">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                </span>
+                <input type="text" id="student-search" onkeyup="filterStudents()" placeholder="Cari nama, NIS, kelas, email..."
+                    class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+            </div>
+        </div>
+
+        <!-- Add Button -->
+        <div>
+            <button type="button" onclick="openAddModal()"
+                class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-xs shadow-md shadow-indigo-600/30 flex items-center justify-center space-x-2 transition-all">
+                <i class="fa-solid fa-plus"></i>
+                <span>Tambah Siswa Baru</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Students Table Card -->
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-slate-600">
+                <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                    <tr>
+                        <th class="px-6 py-4">Siswa</th>
+                        <th class="px-6 py-4">NIS</th>
+                        <th class="px-6 py-4">Kelas</th>
+                        <th class="px-6 py-4">Email</th>
+                        <th class="px-6 py-4">Status Wajah AI</th>
+                        <th class="px-6 py-4">Status Akun</th>
+                        <th class="px-6 py-4 text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100" id="students-table-body">
+                    {% if students %}
+                        {% for s in students %}
+                        <tr class="hover:bg-slate-50/70 transition-all student-row" data-search="{{ s.nama }} {{ s.nis }} {{ s.kelas }} {{ s.email }}">
+                            <td class="px-6 py-4 font-bold text-slate-800 flex items-center space-x-3">
+                                <div class="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 font-bold flex items-center justify-center text-xs flex-shrink-0">
+                                    {{ s.nama[:1] | upper }}
+                                </div>
+                                <span class="truncate max-w-[160px]">{{ s.nama }}</span>
+                            </td>
+                            <td class="px-6 py-4 font-mono text-xs">{{ s.nis }}</td>
+                            <td class="px-6 py-4 font-medium">{{ s.kelas }}</td>
+                            <td class="px-6 py-4 text-xs text-slate-500">{{ s.email }}</td>
+                            <td class="px-6 py-4">
+                                {% if s.has_face %}
+                                <span class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                    <i class="fa-solid fa-check text-[10px]"></i>
+                                    <span>Terdaftar</span>
+                                </span>
+                                {% else %}
+                                <a href="{{ url_for('admin_register_face', uid=s.uid) }}" class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200 hover:bg-amber-200 transition-all">
+                                    <i class="fa-solid fa-camera text-[10px]"></i>
+                                    <span>Daftarkan Wajah</span>
+                                </a>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold {% if s.status == 'aktif' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-slate-100 text-slate-600{% endif %}">
+                                    {{ s.status or 'aktif' }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <div class="flex items-center justify-center space-x-1.5">
+                                    <a href="{{ url_for('admin_register_face', uid=s.uid) }}" title="Scan / Daftarkan Wajah" class="p-2 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-all">
+                                        <i class="fa-solid fa-camera"></i>
+                                    </a>
+                                    <button onclick='openEditModal({{ s|tojson }})' title="Edit Data" class="p-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+                                    <button onclick="deleteStudent('{{ s.uid }}', '{{ s.nama }}')" title="Hapus Siswa" class="p-2 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-center text-slate-400">
+                                <i class="fa-regular fa-user-xmark text-3xl mb-2 text-slate-300 block"></i>
+                                Belum ada siswa terdaftar. Klik "Tambah Siswa Baru" untuk membuat akun pertama.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal Tambah Siswa -->
+<div id="add-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 animate-[fadeIn_0.2s_ease-out]">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+            <h3 class="text-lg font-extrabold text-slate-800">Tambah Siswa Baru</h3>
+            <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <form id="add-student-form" onsubmit="submitAddStudent(event)" class="space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">NIS *</label>
+                    <input type="text" id="add-nis" required placeholder="Contoh: 2026001"
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:bg-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Kelas *</label>
+                    <input type="text" id="add-kelas" required placeholder="Contoh: XII RPL 1"
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:bg-white">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nama Lengkap *</label>
+                <input type="text" id="add-nama" required placeholder="Nama siswa"
+                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:bg-white">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Email Siswa *</label>
+                <input type="email" id="add-email" required placeholder="siswa@sekolah.sch.id"
+                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:bg-white">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Kata Sandi</label>
+                    <input type="password" id="add-password" placeholder="Default: 123456"
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:bg-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Status Akun</label>
+                    <select id="add-status" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:bg-white">
+                        <option value="aktif">Aktif</option>
+                        <option value="nonaktif">Nonaktif</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="pt-4 flex items-center justify-end space-x-3">
+                <button type="button" onclick="closeAddModal()" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50">
+                    Batal
+                </button>
+                <button type="submit" id="btn-save-add" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-600/30">
+                    Simpan Siswa
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Edit Siswa -->
+<div id="edit-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+            <h3 class="text-lg font-extrabold text-slate-800">Edit Data Siswa</h3>
+            <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <form id="edit-student-form" onsubmit="submitEditStudent(event)" class="space-y-4">
+            <input type="hidden" id="edit-uid">
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">NIS *</label>
+                    <input type="text" id="edit-nis" required
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:bg-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Kelas *</label>
+                    <input type="text" id="edit-kelas" required
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:bg-white">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nama Lengkap *</label>
+                <input type="text" id="edit-nama" required
+                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:bg-white">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Email Siswa *</label>
+                <input type="email" id="edit-email" required
+                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:bg-white">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Kata Sandi Baru</label>
+                    <input type="password" id="edit-password" placeholder="Kosongkan jika tidak diubah"
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:bg-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Status Akun</label>
+                    <select id="edit-status" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:bg-white">
+                        <option value="aktif">Aktif</option>
+                        <option value="nonaktif">Nonaktif</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="pt-4 flex items-center justify-end space-x-3">
+                <button type="button" onclick="closeEditModal()" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50">
+                    Batal
+                </button>
+                <button type="submit" id="btn-save-edit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-600/30">
+                    Simpan Perubahan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function filterStudents() {
+    const query = document.getElementById("student-search").value.toLowerCase();
+    const rows = document.querySelectorAll(".student-row");
+
+    rows.forEach(r => {
+        const text = r.getAttribute("data-search").toLowerCase();
+        r.style.display = text.includes(query) ? "" : "none";
+    });
+}
+
+function openAddModal() {
+    document.getElementById("add-modal").classList.remove("hidden");
+}
+function closeAddModal() {
+    document.getElementById("add-modal").classList.add("hidden");
+}
+
+function openEditModal(student) {
+    document.getElementById("edit-uid").value = student.uid;
+    document.getElementById("edit-nis").value = student.nis || "";
+    document.getElementById("edit-nama").value = student.nama || "";
+    document.getElementById("edit-kelas").value = student.kelas || "";
+    document.getElementById("edit-email").value = student.email || "";
+    document.getElementById("edit-status").value = student.status || "aktif";
+    document.getElementById("edit-password").value = "";
+    document.getElementById("edit-modal").classList.remove("hidden");
+}
+function closeEditModal() {
+    document.getElementById("edit-modal").classList.add("hidden");
+}
+
+async function submitAddStudent(e) {
+    e.preventDefault();
+    const btn = document.getElementById("btn-save-add");
+    btn.disabled = true;
+    btn.innerText = "Menyimpan...";
+
+    const payload = {
+        nis: document.getElementById("add-nis").value,
+        nama: document.getElementById("add-nama").value,
+        kelas: document.getElementById("add-kelas").value,
+        email: document.getElementById("add-email").value,
+        password: document.getElementById("add-password").value || "123456",
+        status: document.getElementById("add-status").value,
+        role: "siswa"
+    };
+
+    try {
+        const resp = await fetch("/api/admin/students", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const res = await resp.json();
+        if (res.success) {
+            alert(res.message);
+            window.location.reload();
+        } else {
+            alert(res.message || "Gagal menambahkan siswa.");
+        }
+    } catch (err) {
+        alert("Terjadi kesalahan koneksi server: " + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Simpan Siswa";
+    }
+}
+
+async function submitEditStudent(e) {
+    e.preventDefault();
+    const uid = document.getElementById("edit-uid").value;
+    const btn = document.getElementById("btn-save-edit");
+    btn.disabled = true;
+    btn.innerText = "Menyimpan...";
+
+    const payload = {
+        nis: document.getElementById("edit-nis").value,
+        nama: document.getElementById("edit-nama").value,
+        kelas: document.getElementById("edit-kelas").value,
+        email: document.getElementById("edit-email").value,
+        status: document.getElementById("edit-status").value
+    };
+    const pw = document.getElementById("edit-password").value;
+    if (pw) {
+        payload.password = pw;
+    }
+
+    try {
+        const resp = await fetch(`/api/admin/students/${uid}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const res = await resp.json();
+        if (res.success) {
+            alert(res.message);
+            window.location.reload();
+        } else {
+            alert(res.message || "Gagal mengubah data siswa.");
+        }
+    } catch (err) {
+        alert("Terjadi kesalahan: " + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Simpan Perubahan";
+    }
+}
+
+async function deleteStudent(uid, nama) {
+    if (!confirm(`Apakah Anda yakin ingin menghapus data siswa "${nama}"? Data absensi terkait tidak akan terhapus.`)) {
+        return;
+    }
+
+    try {
+        const resp = await fetch(`/api/admin/students/${uid}`, { method: "DELETE" });
+        const res = await resp.json();
+        if (res.success) {
+            alert(res.message);
+            window.location.reload();
+        } else {
+            alert(res.message || "Gagal menghapus siswa.");
+        }
+    } catch (err) {
+        alert("Terjadi kesalahan: " + err.message);
+    }
+}
+</script>
+{% endblock %}

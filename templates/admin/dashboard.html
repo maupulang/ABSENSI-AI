@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Admin{% endblock %}
+{% block header_title %}Panel Administrator{% endblock %}
+{% block header_subtitle %}Ringkasan statistik absensi dan data siswa hari ini ({{ stats.date }}){% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- KPI Metric Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        
+        <!-- Total Siswa -->
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Total Siswa Aktif</span>
+                <span class="text-3xl font-black text-slate-800 mt-1 block">{{ stats.total_students }}</span>
+                <span class="text-[11px] text-slate-400 mt-1 flex items-center font-medium">
+                    <i class="fa-solid fa-users mr-1"></i> Terdaftar di Database
+                </span>
+            </div>
+            <div class="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 text-2xl">
+                <i class="fa-solid fa-user-graduate"></i>
+            </div>
+        </div>
+
+        <!-- Hadir Tepat Waktu -->
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Hadir Tepat Waktu</span>
+                <span class="text-3xl font-black text-emerald-600 mt-1 block">{{ stats.hadir }}</span>
+                <span class="text-[11px] text-emerald-600 mt-1 flex items-center font-medium">
+                    <i class="fa-solid fa-circle-check mr-1"></i> Hari ini
+                </span>
+            </div>
+            <div class="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 text-2xl">
+                <i class="fa-solid fa-calendar-check"></i>
+            </div>
+        </div>
+
+        <!-- Terlambat -->
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Terlambat</span>
+                <span class="text-3xl font-black text-amber-500 mt-1 block">{{ stats.terlambat }}</span>
+                <span class="text-[11px] text-amber-600 mt-1 flex items-center font-medium">
+                    <i class="fa-solid fa-clock-rotate-left mr-1"></i> Masuk lewat jam
+                </span>
+            </div>
+            <div class="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 text-2xl">
+                <i class="fa-solid fa-user-clock"></i>
+            </div>
+        </div>
+
+        <!-- Belum Hadir / Alpha -->
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Belum Hadir</span>
+                <span class="text-3xl font-black text-rose-500 mt-1 block">{{ stats.belum_hadir }}</span>
+                <span class="text-[11px] text-rose-600 mt-1 flex items-center font-medium">
+                    <i class="fa-solid fa-user-xmark mr-1"></i> Belum absen
+                </span>
+            </div>
+            <div class="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 text-2xl">
+                <i class="fa-solid fa-clipboard-question"></i>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Attendance Rate Progress Bar -->
+    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-chart-pie text-indigo-600"></i>
+                <span class="text-sm font-bold text-slate-800">Tingkat Kehadiran Keseluruhan</span>
+            </div>
+            <span class="text-sm font-extrabold text-indigo-600">{{ stats.attendance_rate }}%</span>
+        </div>
+        <div class="w-full bg-slate-100 rounded-full h-3.5 overflow-hidden">
+            <div class="bg-gradient-to-r from-indigo-500 to-emerald-500 h-3.5 rounded-full transition-all duration-1000" style="width: {{ stats.attendance_rate }}%"></div>
+        </div>
+    </div>
+
+    <!-- Quick Actions Banner -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <a href="{{ url_for('admin_students') }}" class="p-5 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white shadow-lg shadow-indigo-600/20 flex items-center space-x-4 transition-all">
+            <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-user-plus"></i>
+            </div>
+            <div>
+                <div class="font-extrabold text-sm">Kelola Data Siswa</div>
+                <div class="text-xs text-indigo-100">Tambah, ubah, dan hapus profil siswa</div>
+            </div>
+        </a>
+
+        <a href="{{ url_for('admin_register_face') }}" class="p-5 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white shadow-lg shadow-violet-600/20 flex items-center space-x-4 transition-all">
+            <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-camera-rotate"></i>
+            </div>
+            <div>
+                <div class="font-extrabold text-sm">Registrasi Wajah Siswa</div>
+                <div class="text-xs text-purple-100">Daftarkan wajah siswa ke AI recognizer</div>
+            </div>
+        </a>
+
+        <a href="{{ url_for('admin_reports') }}" class="p-5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white shadow-lg shadow-emerald-600/20 flex items-center space-x-4 transition-all">
+            <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-file-excel"></i>
+            </div>
+            <div>
+                <div class="font-extrabold text-sm">Laporan & Ekspor CSV</div>
+                <div class="text-xs text-emerald-100">Unduh laporan kehadiran siswa</div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Today's Attendance Table -->
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+            <div>
+                <h3 class="font-extrabold text-base text-slate-800">Log Kehadiran Hari Ini ({{ stats.date }})</h3>
+                <p class="text-xs text-slate-400">Data absensi real-time dari Firebase Database</p>
+            </div>
+            <a href="{{ url_for('admin_attendance') }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center space-x-1">
+                <span>Kelola Data Lengkap</span>
+                <i class="fa-solid fa-chevron-right text-[10px]"></i>
+            </a>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-slate-600">
+                <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                    <tr>
+                        <th class="px-6 py-3.5">Nama Siswa</th>
+                        <th class="px-6 py-3.5">NIS</th>
+                        <th class="px-6 py-3.5">Kelas</th>
+                        <th class="px-6 py-3.5">Waktu</th>
+                        <th class="px-6 py-3.5">Status</th>
+                        <th class="px-6 py-3.5">Metode</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% if today_attendance %}
+                        {% for uid, rec in today_attendance.items() %}
+                        <tr class="hover:bg-slate-50/70 transition-all">
+                            <td class="px-6 py-4 font-bold text-slate-800 flex items-center space-x-3">
+                                <div class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 font-bold flex items-center justify-center text-xs">
+                                    {{ rec.nama[:1] | upper }}
+                                </div>
+                                <span>{{ rec.nama }}</span>
+                            </td>
+                            <td class="px-6 py-4 font-mono text-xs">{{ rec.nis }}</td>
+                            <td class="px-6 py-4">{{ rec.kelas }}</td>
+                            <td class="px-6 py-4 font-mono text-xs font-semibold">{{ rec.waktu }}</td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold {% if rec.status == 'Hadir' %}bg-emerald-100 text-emerald-800{% elif rec.status == 'Terlambat' %}bg-amber-100 text-amber-800{% elif rec.status == 'Izin' %}bg-sky-100 text-sky-800{% elif rec.status == 'Sakit' %}bg-purple-100 text-purple-800{% else %}bg-rose-100 text-rose-800{% endif %}">
+                                    {{ rec.status }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-xs text-slate-500">
+                                {{ rec.method or 'Face Recognition' }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-10 text-center text-slate-400 text-sm">
+                                <i class="fa-regular fa-clipboard text-3xl mb-2 text-slate-300 block"></i>
+                                Belum ada siswa yang melakukan absensi hari ini.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Siswa{% endblock %}
+{% block header_title %}Dashboard Siswa{% endblock %}
+{% block header_subtitle %}Pantau status kehadiran dan absensi harian Anda{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Today's Attendance Banner Card -->
+    {% if today_attendance %}
+    <div class="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-emerald-500/20 relative overflow-hidden">
+        <div class="absolute -right-8 -bottom-8 w-44 h-44 rounded-full bg-white/10 blur-xl"></div>
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="space-y-2">
+                <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold tracking-wide">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>ABSENSI HARI INI TERCATAT</span>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Status: {{ today_attendance.status }}</h2>
+                <p class="text-emerald-50 text-sm max-w-xl">
+                    Terima kasih, data kehadiran Anda telah berhasil direkam oleh sistem AI Face Recognition pada jam <strong>{{ today_attendance.waktu }}</strong>.
+                </p>
+            </div>
+            <div class="flex items-center space-x-3 bg-white/15 backdrop-blur-md border border-white/20 p-4 rounded-2xl">
+                <div class="w-12 h-12 rounded-xl bg-white text-emerald-600 flex items-center justify-center text-xl font-bold shadow-md">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-emerald-100 font-medium">Waktu Absen</div>
+                    <div class="text-xl font-black">{{ today_attendance.waktu }}</div>
+                    <div class="text-[10px] text-emerald-200 uppercase tracking-widest">{{ today_attendance.method or 'Face Recognition' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700 rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-indigo-600/25 relative overflow-hidden">
+        <div class="absolute -right-6 -bottom-6 w-48 h-48 rounded-full bg-white/10 blur-2xl"></div>
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="space-y-2 max-w-xl">
+                <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold tracking-wide text-amber-200">
+                    <i class="fa-solid fa-bell animate-pulse"></i>
+                    <span>BELUM MELAKUKAN ABSENSI HARI INI</span>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Halo, {{ student.nama or session.get('nama') }}!</h2>
+                <p class="text-indigo-100 text-sm">
+                    Silakan lakukan pemindaian wajah Anda menggunakan kamera untuk mencatat kehadiran hari ini.
+                </p>
+            </div>
+            <div>
+                <a href="{{ url_for('student_attendance') }}" class="inline-flex items-center space-x-3 px-6 py-4 rounded-2xl bg-white text-indigo-700 font-extrabold shadow-2xl hover:bg-indigo-50 hover:shadow-indigo-500/50 transition-all transform hover:-translate-y-0.5 active:translate-y-0">
+                    <i class="fa-solid fa-camera-rotate text-lg text-indigo-600"></i>
+                    <span>Buka Kamera Absensi</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Student Info & Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+        <!-- Student Identity Card -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 text-xl font-bold">
+                <i class="fa-solid fa-id-card"></i>
+            </div>
+            <div class="overflow-hidden">
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Identitas Siswa</div>
+                <div class="font-bold text-slate-800 text-sm truncate">{{ student.nama or session.get('nama') }}</div>
+                <div class="text-xs text-slate-500">NIS: <span class="font-semibold text-slate-700">{{ student.nis or '-' }}</span> | Kelas: <span class="font-semibold text-slate-700">{{ student.kelas or '-' }}</span></div>
+            </div>
+        </div>
+
+        <!-- Stat 1: Hadir Tepat Waktu -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 text-xl font-bold">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Hadir Tepat Waktu</div>
+                <div class="text-2xl font-black text-slate-800">{{ hadir_count }}</div>
+                <div class="text-[11px] text-emerald-600 font-semibold">Tepat Waktu</div>
+            </div>
+        </div>
+
+        <!-- Stat 2: Terlambat -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 text-xl font-bold">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Terlambat</div>
+                <div class="text-2xl font-black text-slate-800">{{ terlambat_count }}</div>
+                <div class="text-[11px] text-amber-600 font-semibold">Melebihi batas jam</div>
+            </div>
+        </div>
+
+        <!-- Stat 3: Izin/Sakit -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-600 text-xl font-bold">
+                <i class="fa-solid fa-envelope-open-text"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Izin & Sakit</div>
+                <div class="text-2xl font-black text-slate-800">{{ izin_count }}</div>
+                <div class="text-[11px] text-sky-600 font-semibold">Keterangan Khusus</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Attendance Table -->
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+            <div>
+                <h3 class="font-extrabold text-base text-slate-800">Riwayat Absensi Terkini</h3>
+                <p class="text-xs text-slate-400">5 riwayat presensi terakhir Anda</p>
+            </div>
+            <a href="{{ url_for('student_history') }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center space-x-1">
+                <span>Lihat Semua Riwayat</span>
+                <i class="fa-solid fa-chevron-right text-[10px]"></i>
+            </a>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-slate-600">
+                <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                    <tr>
+                        <th class="px-6 py-3.5">Tanggal</th>
+                        <th class="px-6 py-3.5">Jam Absen</th>
+                        <th class="px-6 py-3.5">Status</th>
+                        <th class="px-6 py-3.5">Metode</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% if recent_history %}
+                        {% for item in recent_history %}
+                        <tr class="hover:bg-slate-50/70 transition-all">
+                            <td class="px-6 py-4 font-semibold text-slate-800">{{ item.tanggal }}</td>
+                            <td class="px-6 py-4">{{ item.waktu or '-' }}</td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold {% if item.status == 'Hadir' %}bg-emerald-100 text-emerald-700{% elif item.status == 'Terlambat' %}bg-amber-100 text-amber-700{% elif item.status == 'Izin' %}bg-sky-100 text-sky-700{% elif item.status == 'Sakit' %}bg-purple-100 text-purple-700{% else %}bg-rose-100 text-rose-700{% endif %}">
+                                    {{ item.status }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-xs text-slate-500">
+                                <i class="fa-solid fa-camera mr-1 text-slate-400"></i> {{ item.method or 'Face Recognition' }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="px-6 py-10 text-center text-slate-400 text-sm">
+                                <i class="fa-regular fa-folder-open text-3xl mb-2 text-slate-300 block"></i>
+                                Belum ada riwayat absensi tercatat.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{
+  "rules": {
+    "students": {
+      ".read": "auth != null",
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('students').child(auth.uid).child('role').val() === 'admin')",
+        ".write": "auth != null && root.child('students').child(auth.uid).child('role').val() === 'admin'",
+        "faceEmbedding": {
+          ".read": "auth != null && root.child('students').child(auth.uid).child('role').val() === 'admin'"
+        }
+      }
+    },
+    "attendance": {
+      "$date": {
+        ".read": "auth != null && (root.child('students').child(auth.uid).child('role').val() === 'admin' || data.child(auth.uid).exists())",
+        "$uid": {
+          ".read": "auth != null && (auth.uid === $uid || root.child('students').child(auth.uid).child('role').val() === 'admin')",
+          ".write": "auth != null && (auth.uid === $uid || root.child('students').child(auth.uid).child('role').val() === 'admin')",
+          ".validate": "newData.hasChildren(['nis', 'nama', 'kelas', 'tanggal', 'waktu', 'status', 'timestamp', 'method']) && (!data.exists() || root.child('students').child(auth.uid).child('role').val() === 'admin')"
+        }
+      }
+    }
+  }
+}

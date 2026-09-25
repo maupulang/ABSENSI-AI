@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block title %}Registrasi Wajah Siswa{% endblock %}
+{% block header_title %}Registrasi Wajah Siswa{% endblock %}
+{% block header_subtitle %}Ekstraksi face embedding AI untuk siswa baru atau pembaruan foto wajah{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+
+    <!-- Top Selection Card -->
+    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+        <label for="select-student" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+            Pilih Siswa yang Akan Didaftarkan Wajahnya
+        </label>
+        <div class="flex flex-col sm:flex-row items-center gap-3">
+            <select id="select-student" onchange="onStudentSelected()" class="w-full py-3 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:bg-white">
+                <option value="">-- Pilih Siswa Dari Daftar --</option>
+                {% for s in students %}
+                <option value="{{ s.uid }}" {% if target_uid == s.uid %}selected{% endif %}>
+                    {{ s.nama }} (NIS: {{ s.nis }} - {{ s.kelas }}) {% if s.has_face %}• [Wajah Sudah Terdaftar]{% else %}• [Belum Ada Wajah]{% endif %}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- Camera / Upload Card -->
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">
+        
+        <!-- Tab Mode Switcher -->
+        <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+            <div class="flex items-center space-x-2">
+                <button type="button" id="tab-webcam" onclick="switchMode('webcam')" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold transition-all flex items-center space-x-1.5">
+                    <i class="fa-solid fa-video"></i>
+                    <span>Kamera Langsung</span>
+                </button>
+                <button type="button" id="tab-upload" onclick="switchMode('upload')" class="px-3.5 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white text-xs font-bold transition-all flex items-center space-x-1.5">
+                    <i class="fa-solid fa-upload"></i>
+                    <span>Unggah File Foto</span>
+                </button>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <span id="reg-status-pill" class="text-xs font-medium text-slate-400">Siap Merekam</span>
+            </div>
+        </div>
+
+        <!-- Viewport Area -->
+        <div class="p-6">
+            
+            <!-- Mode 1: Webcam -->
+            <div id="mode-webcam-container">
+                <div class="relative bg-slate-950 rounded-2xl overflow-hidden flex items-center justify-center min-h-[360px] sm:min-h-[420px]">
+                    <video id="reg-video" autoplay playsinline muted class="w-full h-full object-cover transform -scale-x-100"></video>
+                    <canvas id="reg-canvas" class="hidden"></canvas>
+
+                    <!-- Overlay Face Guide -->
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div class="w-56 h-72 sm:w-60 sm:h-76 border-2 border-dashed border-indigo-400/90 rounded-[48px] flex items-center justify-center">
+                            <span class="text-xs text-white/80 font-medium bg-slate-950/60 px-3 py-1 rounded-lg backdrop-blur-sm">
+                                Posisikan wajah di tengah bingkai
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Placeholder -->
+                    <div id="reg-cam-placeholder" class="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center text-slate-400 p-6 text-center">
+                        <i class="fa-solid fa-camera text-4xl text-indigo-400 mb-3"></i>
+                        <h4 class="font-bold text-white mb-1">Kamera Pendaftaran Wajah</h4>
+                        <p class="text-xs text-slate-400 mb-4 max-w-sm">Aktifkan webcam untuk mengambil sampel wajah siswa langsung.</p>
+                        <button type="button" onclick="startRegCamera()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-600/30">
+                            Aktifkan Kamera Sekarang
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex items-center justify-between">
+                    <button type="button" onclick="startRegCamera()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold">
+                        <i class="fa-solid fa-arrow-rotate-right mr-1"></i> Mulai / Reset Kamera
+                    </button>
+                    <button type="button" id="btn-take-snapshot" onclick="takeSnapshot()" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 flex items-center space-x-2">
+                        <i class="fa-solid fa-camera"></i>
+                        <span>Ambil Foto Wajah</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mode 2: File Upload -->
+            <div id="mode-upload-container" class="hidden">
+                <div class="border-2 border-dashed border-slate-300 rounded-3xl p-8 text-center hover:bg-slate-50 transition-all cursor-pointer" onclick="document.getElementById('file-input').click()">
+                    <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+                    <div class="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 text-2xl mx-auto mb-3">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 text-sm mb-1">Klik untuk Memilih File Foto Siswa</h4>
+                    <p class="text-xs text-slate-400">Mendukung format JPG, PNG, atau WEBP dengan wajah jelas dan pencahayaan terang</p>
+                </div>
+            </div>
+
+            <!-- Captured Preview & Final Submit Box -->
+            <div id="preview-section" class="mt-6 p-5 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 hidden">
+                <div class="flex items-center space-x-4">
+                    <img id="preview-image" src="" alt="Sample Wajah" class="w-20 h-20 rounded-2xl object-cover border-2 border-indigo-500 shadow-md">
+                    <div>
+                        <div class="font-extrabold text-sm text-slate-800">Sampel Foto Siap Didaftarkan</div>
+                        <div class="text-xs text-slate-500">AI akan mengekstraksi 128-d face embedding dan menyimpannya ke Firebase.</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2 w-full sm:w-auto">
+                    <button type="button" onclick="cancelPreview()" class="w-1/2 sm:w-auto px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-white">
+                        Ulangi
+                    </button>
+                    <button type="button" id="btn-save-face" onclick="submitFaceRegistration()" class="w-1/2 sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/30 flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Simpan Face Embedding</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+let currentStream = null;
+let capturedBase64 = null;
+
+function onStudentSelected() {
+    const uid = document.getElementById("select-student").value;
+    if (uid) {
+        const url = new URL(window.location);
+        url.searchParams.set('uid', uid);
+        window.history.pushState({}, '', url);
+    }
+}
+
+function switchMode(mode) {
+    const btnWebcam = document.getElementById("tab-webcam");
+    const btnUpload = document.getElementById("tab-upload");
+    const containerWebcam = document.getElementById("mode-webcam-container");
+    const containerUpload = document.getElementById("mode-upload-container");
+
+    if (mode === 'webcam') {
+        btnWebcam.classList.replace('bg-slate-800', 'bg-indigo-600');
+        btnWebcam.classList.replace('text-slate-300', 'text-white');
+        btnUpload.classList.replace('bg-indigo-600', 'bg-slate-800');
+        btnUpload.classList.replace('text-white', 'text-slate-300');
+        containerWebcam.classList.remove('hidden');
+        containerUpload.classList.add('hidden');
+        startRegCamera();
+    } else {
+        btnUpload.classList.replace('bg-slate-800', 'bg-indigo-600');
+        btnUpload.classList.replace('text-slate-300', 'text-white');
+        btnWebcam.classList.replace('bg-indigo-600', 'bg-slate-800');
+        btnWebcam.classList.replace('text-white', 'text-slate-300');
+        containerUpload.classList.remove('hidden');
+        containerWebcam.classList.add('hidden');
+        stopRegCamera();
+    }
+}
+
+async function startRegCamera() {
+    stopRegCamera();
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
+            audio: false
+        });
+        currentStream = stream;
+        const video = document.getElementById("reg-video");
+        video.srcObject = stream;
+        video.onloadedmetadata = () => video.play();
+        document.getElementById("reg-cam-placeholder").classList.add("hidden");
+        document.getElementById("reg-status-pill").innerText = "Kamera Aktif";
+    } catch (err) {
+        alert("Gagal mengakses kamera: " + err.message);
+    }
+}
+
+function stopRegCamera() {
+    if (currentStream) {
+        currentStream.getTracks().forEach(t => t.stop());
+        currentStream = null;
+    }
+    const video = document.getElementById("reg-video");
+    if (video) video.srcObject = null;
+}
+
+function takeSnapshot() {
+    const video = document.getElementById("reg-video");
+    if (!video.videoWidth) {
+        alert("Kamera belum aktif. Silakan aktifkan kamera terlebih dahulu.");
+        return;
+    }
+    const canvas = document.getElementById("reg-canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    
+    // Un-mirror horizontally
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    capturedBase64 = canvas.toDataURL("image/jpeg", 0.9);
+    showPreview(capturedBase64);
+}
+
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        capturedBase64 = e.target.result;
+        showPreview(capturedBase64);
+    };
+    reader.readAsDataURL(file);
+}
+
+function showPreview(base64Data) {
+    document.getElementById("preview-image").src = base64Data;
+    document.getElementById("preview-section").classList.remove("hidden");
+    document.getElementById("preview-section").scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelPreview() {
+    capturedBase64 = null;
+    document.getElementById("preview-section").classList.add("hidden");
+}
+
+async function submitFaceRegistration() {
+    const studentUid = document.getElementById("select-student").value;
+    if (!studentUid) {
+        alert("Harap pilih siswa terlebih dahulu di menu bagian atas.");
+        document.getElementById("select-student").focus();
+        return;
+    }
+    if (!capturedBase64) {
+        alert("Harap ambil foto atau unggah gambar terlebih dahulu.");
+        return;
+    }
+
+    const btn = document.getElementById("btn-save-face");
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Mengekstrak Face Embedding...</span>`;
+
+    try {
+        const resp = await fetch("/api/admin/register-face", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                uid: studentUid,
+                image: capturedBase64
+            })
+        });
+
+        const res = await resp.json();
+        if (res.success) {
+            alert("Berhasil! " + res.message);
+            window.location.href = "{{ url_for('admin_students') }}";
+        } else {
+            alert("Gagal: " + (res.message || "Wajah tidak terdeteksi atau ekstraksi gagal."));
+        }
+    } catch (err) {
+        alert("Terjadi kesalahan koneksi server: " + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i><span>Simpan Face Embedding</span>`;
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,57 @@
+/* Custom App Styling for ABSENSI AI */
+
+@keyframes scan {
+    0% {
+        top: 0%;
+        opacity: 0.9;
+    }
+    50% {
+        top: 100%;
+        opacity: 1;
+    }
+    100% {
+        top: 0%;
+        opacity: 0.9;
+    }
+}
+
+.scanner-laser-active {
+    animation: scan 2.5s ease-in-out infinite;
+}
+
+/* Glassmorphism helpers */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-panel-dark {
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Video Mirroring for natural webcam feel */
+.mirror-mode {
+    transform: scaleX(-1);
+}

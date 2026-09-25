@@ -1,0 +1,206 @@
+Buatkan aplikasi web **ABSENSI AI** menggunakan **Python Flask + Firebase Realtime Database**.
+
+### Teknologi
+
+* Python + Flask
+* HTML, CSS, JavaScript
+* OpenCV + library Face Recognition/Face Embedding yang kompatibel dengan Python
+* Firebase Realtime Database
+* Firebase Authentication
+* Firebase Storage jika diperlukan
+
+### Fitur utama
+
+Aplikasi memiliki **2 role**:
+
+**1. Siswa**
+
+* Login
+* Dashboard siswa
+* Absensi menggunakan kamera dan AI Face Recognition
+* Sistem mengenali wajah siswa
+* Menampilkan nama, tanggal, jam, dan status absensi
+* Mencegah absensi dua kali pada hari yang sama
+* Melihat riwayat absensi sendiri
+
+**2. Admin**
+
+* Login
+* Dashboard admin
+* Melihat jumlah siswa, hadir, terlambat, dan belum hadir
+* CRUD data siswa
+* Registrasi wajah siswa
+* Melihat semua data absensi
+* Laporan absensi
+* Filter berdasarkan tanggal, kelas, siswa, dan status
+* Export laporan ke CSV/Excel
+
+### Face Recognition
+
+Alur absensi:
+
+```text
+Kamera
+↓
+Deteksi wajah
+↓
+Face Embedding
+↓
+Cocokkan dengan data siswa
+↓
+Validasi identitas
+↓
+Cek absensi hari ini
+↓
+Simpan ke Firebase
+↓
+Tampilkan hasil
+```
+
+Jika wajah tidak dikenali, tampilkan pesan **"Wajah tidak dikenali."**
+
+Jika sudah absen, tampilkan **"Anda sudah melakukan absensi hari ini."**
+
+Gunakan face embedding dan threshold yang dapat dikonfigurasi.
+
+### Data siswa
+
+Simpan data seperti:
+
+```text
+students/
+  UID/
+    nis
+    nama
+    kelas
+    email
+    role
+    foto
+    faceEmbedding
+    status
+```
+
+### Data absensi
+
+Gunakan struktur:
+
+```text
+attendance/
+  YYYY-MM-DD/
+    UID/
+      nis
+      nama
+      kelas
+      tanggal
+      waktu
+      status
+      timestamp
+      method
+```
+
+Status absensi:
+
+* Hadir
+* Terlambat
+* Izin
+* Sakit
+* Alpha
+
+### Firebase
+
+Gunakan project berikut:
+
+```text
+Project Name : ABSENSI AI
+Project ID   : absensi-ai-a8281
+Database URL : https://absensi-ai-a8281-default-rtdb.firebaseio.com
+```
+
+Firebase Web Config:
+
+```javascript
+const firebaseConfig = {
+    apiKey: "AIzaSyBLnZnaR_nnW8ds4Zhe554lGAXUl3VVHXE",
+    authDomain: "absensi-ai-a8281.firebaseapp.com",
+    databaseURL: "https://absensi-ai-a8281-default-rtdb.firebaseio.com",
+    projectId: "absensi-ai-a8281",
+    storageBucket: "absensi-ai-a8281.firebasestorage.app",
+    messagingSenderId: "778160501517",
+    appId: "1:778160501517:web:0917fbbb87420221d47644"
+};
+```
+
+Jangan menaruh Firebase Admin SDK private key atau credential rahasia di source code. Gunakan `.env`.
+
+### UI
+
+Buat tampilan modern, sederhana, responsive.
+
+Halaman:
+
+```text
+/login
+/admin/dashboard
+/admin/students
+/admin/attendance
+/admin/reports
+/admin/register-face
+
+/student/dashboard
+/student/attendance
+/student/history
+```
+
+Gunakan sidebar dan dashboard card.
+
+### Keamanan
+
+* Siswa hanya dapat melihat data sendiri.
+* Admin dapat mengelola data siswa dan laporan.
+* Siswa tidak dapat mengakses halaman admin.
+* Jangan izinkan perubahan role dari frontend.
+* Cegah absensi duplikat.
+* Jangan tampilkan face embedding kepada user.
+* Buat Firebase Security Rules.
+* Jangan menyimpan password plaintext.
+
+### Struktur project
+
+Gunakan struktur sederhana:
+
+```text
+absensi-ai/
+├── app.py
+├── requirements.txt
+├── .env
+├── .env.example
+├── .gitignore
+├── firebase_config.py
+├── face_recognition_service.py
+├── attendance_service.py
+├── templates/
+├── static/
+└── README.md
+```
+
+### Yang saya inginkan
+
+Jangan hanya membuat desain. Buat **kode aplikasi yang benar-benar dapat dijalankan**.
+
+Berikan:
+
+1. Struktur folder
+2. Kode Python Flask
+3. Kode HTML/CSS/JavaScript
+4. Firebase integration
+5. Face recognition
+6. Login dan role
+7. Absensi
+8. CRUD siswa
+9. Laporan
+10. Firebase Security Rules
+11. `requirements.txt`
+12. `.env.example`
+13. Panduan instalasi dan menjalankan aplikasi
+
+Kerjakan secara bertahap. Mulai dari **struktur project + koneksi Firebase + login**, kemudian lanjutkan ke fitur siswa, admin, face recognition, absensi, dan laporan.

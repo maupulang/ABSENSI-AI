@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# ONNX Models (auto-downloaded on runtime)
+models/*.onnx
+
+# Environment variables & secrets
+.env
+serviceAccountKey.json
+*.pem
+*.key
+
+# Operating System
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+
+# Static uploads / cache
+static/uploads/
+models/cache/
